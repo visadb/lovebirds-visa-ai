@@ -1,0 +1,18 @@
+#!/bin/bash
+# Open a shell to the first running devcontainer.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+DEVCONTAINER_NAME=$(jq -r '.name' "$SCRIPT_DIR/../.devcontainer/devcontainer.json")
+
+CONTAINER=$(docker ps --filter "status=running" \
+    --filter "label=com.intellij.devcontainer.presentable.name=$DEVCONTAINER_NAME" \
+    --format '{{.Names}}' | head -1)
+
+if [ -z "$CONTAINER" ]; then
+    echo "No running devcontainer found with name '$DEVCONTAINER_NAME'." >&2
+    exit 1
+fi
+
+exec docker exec -it --user vscode -w /IdeaProjects/lovebirds/ "$CONTAINER" /bin/bash
